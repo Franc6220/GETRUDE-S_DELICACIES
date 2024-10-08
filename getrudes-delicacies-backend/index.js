@@ -6,10 +6,6 @@ const dotenv = require('dotenv');
 // Load environment variables from .env file
 dotenv.config();
 
-// Verify the environment variables (for debugging purposes)
-console.log("MONGO_URI: ", process.env.MONGO_URI);
-console.log("JWT_SECRET: ", process.env.JWT_SECRET);
-
 const app = express();
 app.use(express.json());
 
