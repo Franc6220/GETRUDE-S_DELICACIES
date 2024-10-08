@@ -18,6 +18,10 @@ mongoose.connect(process.env.MONGO_URI)
 	.then(() => console.log('MongoDB connected'))
 	.catch((err) => console.log(err));
 
+// Import user routes
+const userRoutes = require('./routes/userRoutes');
+app.use('./api/users', userRoutes);
+
 // Basic route
 app.get('/', (req, res) => {
 	res.send('API is running...');
