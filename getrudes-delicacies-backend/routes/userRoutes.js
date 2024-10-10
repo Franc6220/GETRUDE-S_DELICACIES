@@ -4,7 +4,7 @@ const router = express.Router();
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
 
 
 // Register user
@@ -78,6 +78,51 @@ router.get('/profile', protect, async (req, res) => {
 			name: req.user.name,
 			email: req.user.email,
 		});
+	} catch (error) {
+		res.status(500).json({ message: 'Server error' });
+	}
+});
+
+// --- New Features Start Here ---
+
+// Admin-only route
+router.get('/admin', protect, admin, (req, res) => {
+	res.json({ message: 'Welcome, Admin!' });
+});
+
+// View order history (protected route)
+router.get('/orders', protect, (req, res) => {
+	// Simulated order history (replace this with actual order logic later)
+	const orders = [
+		{ orderId: '001', product: 'English breakfast', price: 1800 },
+		{ orderId: '002', product: '3 slices of tea cake and milk tea', price: 500 },
+	];
+
+	res.json({ user: req.user.name, orders });
+});
+
+// Update user profile (protected route)
+router.put('/profile', protect, async (req, res) => {
+	try {
+		const user = await User.findById(req.user._id);
+
+		if (user) {
+			user.name = req.body.name || user.name;
+			user.email = req.body.email || user.email;
+			if (req.body.password) {
+				user.password = req.body.password;
+			}
+
+			const updatedUser = await user.save();
+			res.json({
+				_id: updatedUser._id,
+				name: updatedUser.name,
+				email: updatedUser.email,
+				token: jwt.sign({ id: updatedUser._id }, process.env.JWT_SECRET, { expiresIn: '30d' }),
+			});
+		} else {
+			res.status(404).json({ message: 'User not found' });
+		}
 	} catch (error) {
 		res.status(500).json({ message: 'Server error' });
 	}

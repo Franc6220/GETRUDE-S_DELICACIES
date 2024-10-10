@@ -16,7 +16,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Import user routes
 const userRoutes = require('./routes/userRoutes');
-app.use('./api/users', userRoutes);
+app.use('/api/users', userRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

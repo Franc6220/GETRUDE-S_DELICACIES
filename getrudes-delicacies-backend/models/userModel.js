@@ -14,8 +14,13 @@ const userSchema = mongoose.Schema(
 			unique: true,
 		},
 		password: {
-			tepe: String,
+			type: String,
 			required: true,
+		},
+		role: {
+			type: String,
+			enum: ['user', 'admin'],   // Role can either be 'user' or 'admin'
+			default: 'user',           // Default role is 'user'
 		},
 	},
 	{
@@ -31,6 +36,7 @@ userSchema.pre('save', async function (next) {
 
 	const salt = await bcrypt.genSalt(10);
 	this.password = await bcrypt.hash(this.password, salt);
+	next();
 });
 
 // Add method to compare passwords during login
