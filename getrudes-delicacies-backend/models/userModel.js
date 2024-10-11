@@ -22,6 +22,8 @@ const userSchema = mongoose.Schema(
 			enum: ['user', 'admin'],   // Role can either be 'user' or 'admin'
 			default: 'user',           // Default role is 'user'
 		},
+		resetPasswordToken: String,      // Added for password reset token
+		resetPasswordExpire: Date,       // Added for token expiration
 	},
 	{
 		timestamps: true,
@@ -45,5 +47,4 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 const User = mongoose.model('User', userSchema);
-
 module.exports = User;
