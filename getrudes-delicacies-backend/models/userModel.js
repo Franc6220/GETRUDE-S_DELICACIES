@@ -24,6 +24,13 @@ const userSchema = mongoose.Schema(
 		},
 		resetPasswordToken: String,      // Added for password reset token
 		resetPasswordExpire: Date,       // Added for token expiration
+		isVerified: {
+			type: Boolean,
+			default: false,          // Set to false initially
+		},
+		verification: {                   // New: Store email verification token
+			type: String,
+		},
 	},
 	{
 		timestamps: true,
@@ -47,4 +54,5 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 const User = mongoose.model('User', userSchema);
+
 module.exports = User;

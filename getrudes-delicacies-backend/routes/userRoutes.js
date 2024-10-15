@@ -21,25 +21,64 @@ router.post('/register', async (req, res) => {
 			return res.status(400).json({ mesaage: 'User already exists' });
 		}
 
-		// Create a new user
+		// Generate an email verification token
+		const verificationToken = crypto.randomBytes(32).toString('hex');
+
+		// Create a new user with verificationToken and isVerified set to false
 		const user = await User.create({
 			name,
 			email,
 			password,     // Password will be hashed by the `userModel` pre-save hook
+			verificationToken,  // Store the token for verification
+			isVerified: false,  // Mark user as unverified initially
 		});
 
-		// Generate a JWT token
-		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { 
-			expiresIn: '30d' 
+		// Send verification email
+		const transporter = nodemailer.createTransport({
+			host: 'smtp.mail.yahoo.com',  // Change if using Gmail
+			port: 465,
+			secure: true,  // Use SSL
+			auth: {
+				user: process.env.EMAIL_USERNAME,
+				pass: process.env.EMAIL_PASSWORD,
+			},
 		});
+
+		const mailOptions = {
+			from: process.env.EMAIL_FROM,
+			to: user.email,
+			subject: 'Email Verification',
+			text:`Please verify your email by clicking the following link: \n\n http://localhost:5000/api/users/verify/${verificationToken}`,
+		};
+
+		await transporter.sendMail(mailOptions);
 
 		res.status(201).json({
-			_id: user._id,
-			name: user.name,
-			email: user.email,
-			token,
+			message: 'User registered. Please check your email to verify your account.',
 		});
 	} catch (error) {
+		console.error('Server error:', error);
+		res.status(500).json({ message: 'Server error' });
+	}
+});
+
+// Email verification route (New Route)
+router.get('/verify/:token', async (req, res) => {
+	try {
+		const user = await User.findOne({ verificationToken: req.params.token });
+
+		if (!user) {
+			return res.status(400).json({ message: 'Invalid or expired token' });
+		}
+
+		// Mark user as verified
+		user.isVerified = true;
+		user.verificationToken = undefined;            // Clear the token after verification
+		await user.save();
+
+		res.status(200).json({ message: 'Email verified successfully' });
+	} catch (error) {
+		console.error('Server error:', error);
 		res.status(500).json({ message: 'Server error' });
 	}
 });
@@ -53,19 +92,24 @@ router.post('/login', async (req, res) => {
 		const user = await User.findOne({ email });
 
 		if (user && (await user.matchPassword(password))) {
+			// Check if the user is verified
+			if (!user.isVerified) {
+				return res.status(401).json({ message: 'Please verify your email before logging in' });
+			}
+
 			const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
 				expiresIn: '30d'
 			});
 
-		res.json({
-			_id: user._id,
-			name: user.name,
-			email: user.email,
-			token,
-		});
-	} else {
-		res.status(401).json({ message: 'Invalid email or password' });
-	}
+			res.json({
+				_id: user._id,
+				name: user.name,
+				email: user.email,
+				token,
+			});
+		} else {
+			res.status(401).json({ message: 'Invalid email or password' });
+		}
 	} catch (error) {
 		res.status(500).json({ message: 'Server error' });
 	}
@@ -143,14 +187,15 @@ router.post('/forgotpassword', async (req, res) => {
 		user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;   // Expires in 10 minutes
 		await user.save();
 
-		// Log environment variables to check if they are set
-		console.log('EMAIL_USERNAME:', process.env.EMAIL_USERNAME);
-		console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD);
-		console.log('EMAIL_FROM:', process.env.EMAIL_FROM);
-
+		// Setup email transport
 		const transporter = nodemailer.createTransport({
-			service: 'gmail',
-			auth: { user: process.env.EMAIL_USERNAME, pass: process.env.EMAIL_PASSWORD },
+			host: 'smtp.mail.yahoo.com',
+			port: 465,   // SSL port for Yahoo
+			secure: true,   // Use SSL
+			auth: {
+				user: process.env.EMAIL_USERNAME,
+				pass: process.env.EMAIL_PASSWORD,
+			},
 		});
 
 		const mailOptions = {
@@ -163,6 +208,7 @@ router.post('/forgotpassword', async (req, res) => {
 		await transporter.sendMail(mailOptions);
 		res.status(200).json({ message: 'Password reset email sent' });
 	} catch (error) {
+		console.error('Error occurred during email sending:', error);  // Log the full error
 		res.status(500).json({ message: 'Server error' });
 	}
 });
