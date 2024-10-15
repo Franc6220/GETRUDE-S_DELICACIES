@@ -51,11 +51,13 @@ router.post('/register', async (req, res) => {
 			text:`Please verify your email by clicking the following link: \n\n http://localhost:5000/api/users/verify/${verificationToken}`,
 		};
 
-		await transporter.sendMail(mailOptions);
-
-		res.status(201).json({
-			message: 'User registered. Please check your email to verify your account.',
-		});
+		try {
+			await transporter.sendMail(mailOptions);
+			res.status(201).json({ message: 'User registered. Please check your email to verify your account.', });
+		} catch (error) {
+			console.error('Error sending verification email:', error);
+			res.status(500).json({ message: 'Error sending verification email.' });
+		}
 	} catch (error) {
 		console.error('Server error:', error);
 		res.status(500).json({ message: 'Server error' });
@@ -155,15 +157,21 @@ router.put('/profile', protect, async (req, res) => {
 		if (user) {
 			user.name = req.body.name || user.name;
 			user.email = req.body.email || user.email;
+			user.address =req.body.address || user.address;
+			user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
+
 			if (req.body.password) {
 				user.password = req.body.password;
 			}
 
 			const updatedUser = await user.save();
+
 			res.json({
 				_id: updatedUser._id,
 				name: updatedUser.name,
 				email: updatedUser.email,
+				address: updatedUser.address,
+				phoneNumber: updatedUser.phoneNumber,
 				token: jwt.sign({ id: updatedUser._id }, process.env.JWT_SECRET, { expiresIn: '30d' }),
 			});
 		} else {
