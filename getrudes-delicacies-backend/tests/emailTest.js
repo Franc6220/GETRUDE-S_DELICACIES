@@ -12,11 +12,13 @@ async function sendTestEmail() {
 				user: process.env.EMAIL_USERNAME,
 				pass: process.env.EMAIL_PASSWORD,
 			},
+			logger: true,  // Enable logging
+			debug: true    // Show debug output
 		});
 
 		const mailOptions = {
 			from: process.env.EMAIL_FROM,
-			to: 'getrudegrande14@gmail.com',  // Always use a valid recipient email address
+			to: 'wangalibosamuel@yahoo.com',  // Always use a valid recipient email address
 			subject: 'Test Email',
 			text: 'This is a test email from Nodemailer',
 		};
