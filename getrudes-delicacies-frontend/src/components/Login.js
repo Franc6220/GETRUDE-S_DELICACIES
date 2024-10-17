@@ -14,7 +14,12 @@ const Login = () => {
 		try {
 			const res = await api.post('/users/login', { email, password });
 			console.log('Login successful:', res.data);
-			navigate('/profile');         // Redirect to profile after successful login
+
+			// Save the JWT token in localStorage for future use
+			localStorage.setItem('authToken', res.data.token);
+
+			//Redirect to profile after successful login
+			navigate('/profile');
 		} catch (err) {
 			setError('Login failed. Please check your credentials.');
 			console.error('Login error:', err);
