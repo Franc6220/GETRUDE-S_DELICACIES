@@ -18,7 +18,7 @@ async function sendTestEmail() {
 
 		const mailOptions = {
 			from: process.env.EMAIL_FROM,
-			to: 'wangalibosamuel@yahoo.com',  // Always use a valid recipient email address
+			to: 'backendwangalibo@yahoo.com',  // Always use a valid recipient email address
 			subject: 'Test Email',
 			text: 'This is a test email from Nodemailer',
 		};

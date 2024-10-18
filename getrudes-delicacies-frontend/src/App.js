@@ -7,10 +7,12 @@ import Login from './components/Login';
 import Profile from './components/Profile';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
+import Navbar from './components/Navbar';
 
 function App() {
 	return (
 		<Router>
+			<Navbar />
 			<Routes>
 				<Route path="/" element={<Home />} />
 				<Route path="/register" element={<Register />} />
